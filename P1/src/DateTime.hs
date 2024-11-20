@@ -6,9 +6,9 @@ import Control.Monad
 
 -- | "Target" datatype for the DateTime parser, i.e, the parser should produce elements of this type.
 data DateTime = DateTime { date :: Date
-                         , time :: Time
-                         , utc  :: Bool }
-    deriving (Eq, Ord)
+                         , time :: Time }
+                        --  , utc  :: Bool }
+    deriving (Eq, Ord, Show)
 
 data Date = Date { year  :: Year
                  , month :: Month
@@ -42,20 +42,18 @@ parseS = (\d _ s -> Minus d s) <$> parseD <*> symbol '-' <*> parseS
 
 -- Exercise 1
 parseDateTime :: Parser Char DateTime
-parseDateTime = undefined
+parseDateTime = DateTime <$> parseDate <* symbol 'T' <*> parseTime
 
 parseDate :: Parser Char Date
-parseDate = undefined  
+parseDate = Date <$> parseGenericDigits Year 4 <*> parseGenericDigits Month 2 <*> parseGenericDigits Day 2  
+
+-- this is a very common pattern, type classable? 
+-- would allow for parseGenericDigits 4 instead of parseGenericDigits Year 4
+parseGenericDigits :: (Int -> a) -> Int -> Parser Char a 
+parseGenericDigits a n = readStringInt a <$> parseDigits n
 
 parseTime :: Parser Char Time 
-parseTime = parseTime' <$> parseDigits 6
-
-parseTime' :: String -> Time
-parseTime' s = Time
-  { hour   = undefined 
-  , minute = undefined
-  , second = undefined
-  }
+parseTime = Time <$> parseHour <*> parseMinute <*> parseSecond
 
 parseHour :: Parser Char Hour
 parseHour = readStringInt Hour <$> parseTwoDigits
@@ -74,7 +72,6 @@ parseDigits n = replicateM n digit
 
 readStringInt ::  (Int -> a) -> String -> a
 readStringInt constructor s = constructor $ read s 
-
 
 -- Exercise 2
 run :: Parser a b -> [a] -> Maybe b
