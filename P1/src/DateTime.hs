@@ -6,8 +6,8 @@ import Control.Monad
 
 -- | "Target" datatype for the DateTime parser, i.e, the parser should produce elements of this type.
 data DateTime = DateTime { date :: Date
-                         , time :: Time }
-                        --  , utc  :: Bool }
+                         , time :: Time 
+                         , utc  :: Bool}
     deriving (Eq, Ord, Show)
 
 data Date = Date { year  :: Year
@@ -28,21 +28,9 @@ newtype Hour   = Hour   { runHour   :: Int } deriving (Eq, Ord, Show)
 newtype Minute = Minute { runMinute :: Int } deriving (Eq, Ord, Show)
 newtype Second = Second { runSecond :: Int } deriving (Eq, Ord, Show)
 
--- Testing
-data S = Minus D S | SingleDigit D deriving (Show)
-data D = Zero | One deriving (Show)
-
-parseD :: Parser Char D
-parseD = Zero <$ symbol '0' 
-  <|> One <$ symbol '1'
-
-parseS :: Parser Char S
-parseS = (\d _ s -> Minus d s) <$> parseD <*> symbol '-' <*> parseS 
-  <|> SingleDigit <$> parseD
-
 -- Exercise 1
 parseDateTime :: Parser Char DateTime
-parseDateTime = DateTime <$> parseDate <* symbol 'T' <*> parseTime
+parseDateTime = DateTime <$> parseDate <* symbol 'T' <*> parseTime <*> parseTimeUTC
 
 parseDate :: Parser Char Date
 parseDate = Date <$> parseGenericDigits Year 4 <*> parseGenericDigits Month 2 <*> parseGenericDigits Day 2  
@@ -73,13 +61,50 @@ parseDigits n = replicateM n digit
 readStringInt ::  (Int -> a) -> String -> a
 readStringInt constructor s = constructor $ read s 
 
+parseTimeUTC :: Parser Char Bool 
+parseTimeUTC = True <$ symbol 'Z' <|> False <$ eof
+
 -- Exercise 2
 run :: Parser a b -> [a] -> Maybe b
-run = undefined
+run p s = if null res 
+          then Nothing 
+          else 
+            case res of
+              [(a, [])] -> Just a
+              _         -> Nothing 
+          where res = parse p s 
 
 -- Exercise 3
+testDateTime :: DateTime
+testDateTime = DateTime {date = Date {year = Year {runYear =1997}, month = Month {runMonth = 6}, day = Day {runDay = 10}}, time = Time {hour = Hour {runHour = 17}, minute = Minute {runMinute = 23}, second = Second {runSecond = 45}}, utc = True}
+
 printDateTime :: DateTime -> String
-printDateTime = undefined
+printDateTime dt = printDate (date dt) 
+                ++ "T" 
+                ++ printTime (time dt) 
+                ++ printZulu (utc dt)
+
+printDate :: Date -> String 
+printDate d = show4 (runYear (year d)) 
+           ++ show2 (runMonth (month d)) 
+           ++ show2 (runDay (day d))
+
+printTime :: Time -> String
+printTime t = show2 (runHour (hour t)) 
+           ++ show2 (runMinute (minute t))
+           ++ show2 (runSecond (second t))
+
+show2 :: Show a => a -> String
+show2 x = if length s < 2 then '0' : s else s
+  where s = show x 
+
+show4 :: Show a => a -> String
+show4 x = if length s < 4 then '0' : s else s
+  where s = show x 
+
+printZulu :: Bool -> String 
+printZulu True  = "Z"
+printZulu False = ""
 
 -- Exercise 4
 parsePrint s = fmap printDateTime $ run parseDateTime s
