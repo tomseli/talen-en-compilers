@@ -10,13 +10,13 @@ import Control.Monad
 -- | "Target" datatype for the DateTime parser, i.e, the parser should produce elements of this type.
 data DateTime = DateTime { date :: Date
                          , time :: Time
-                         , utc  :: Bool}
-    deriving (Eq, Ord, Show)
+                         , utc  :: Bool }
+  deriving (Eq, Ord, Show)
 
 data Date = Date { year  :: Year
                  , month :: Month
                  , day   :: Day }
-    deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show)
 
 newtype Year  = Year  { runYear  :: Int } deriving (Eq, Ord, Show)
 newtype Month = Month { runMonth :: Int } deriving (Eq, Ord, Show)
@@ -25,7 +25,7 @@ newtype Day   = Day   { runDay   :: Int } deriving (Eq, Ord, Show)
 data Time = Time { hour   :: Hour
                  , minute :: Minute
                  , second :: Second }
-    deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show)
 
 newtype Hour   = Hour   { runHour   :: Int } deriving (Eq, Ord, Show)
 newtype Minute = Minute { runMinute :: Int } deriving (Eq, Ord, Show)
@@ -64,8 +64,10 @@ parseDigits n = replicateM n digit
 readStringInt ::  (Int -> a) -> String -> a
 readStringInt constructor s = constructor $ read s
 
+-- tries to parse 'Z', if it fails return False
+-- to avoid having two succesful results, the biased left hand operator is used
 parseTimeUTC :: Parser Char Bool
-parseTimeUTC = True <$ symbol 'Z' <|> False <$ eof
+parseTimeUTC = True <$ symbol 'Z' <<|> pure False
 
 -- Exercise 2
 run :: Parser a b -> [a] -> Maybe b
