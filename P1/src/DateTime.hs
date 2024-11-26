@@ -72,8 +72,8 @@ parseTimeUTC = True <$ symbol 'Z' <<|> pure False
 -- Exercise 2
 run :: Parser a b -> [a] -> Maybe b
 run p s = case parse p s of
-  [(a, [])] -> Just a
-  _         -> Nothing
+  []         -> Nothing
+  (a, _):_  -> Just a
 
 -- Exercise 3
 testDateTime :: DateTime

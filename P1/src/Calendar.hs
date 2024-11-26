@@ -17,20 +17,16 @@ data CalProperties = CalProperties { productid :: String
                                    , version   :: Bool }
     deriving (Eq, Ord, Show)
 
-data Event = Event { dtstamp     :: Maybe DateTime
-                   , uid         :: Maybe String
-                   , dtstart     :: Maybe DateTime
-                   , dtend       :: Maybe DateTime
+data Event = Event { dtstamp     :: DateTime
+                   , uid         :: String
+                   , dtstart     :: DateTime
+                   , dtend       :: DateTime
                    , description :: Maybe String
                    , summary     :: Maybe String
                    , location    :: Maybe String }
   deriving (Eq, Ord, Show)
 
--- keep these in mind, i guess
-type UID         = String
-type Description = String
-type Summary     = String
-type Location    = String
+newtype Text = Text String deriving (Show, Eq, Ord)
 
 -- Exercise 7
 data Token = TBeginCalendar
@@ -38,15 +34,30 @@ data Token = TBeginCalendar
            | TBeginEvent
            | TEndEvent
            | TVersion
-           | TProdID        String
-           | TUID           String
-           | TDTStamp       String
-           | TDTStart       String
-           | TDTEnd         String
-           | TDTDescription String
-           | TDTSummary     String
-           | TDTLocation    String
+           | TProdID        Text
+           | TUID           Text
+           | TDTStamp       Text
+           | TDTStart       Text
+           | TDTEnd         Text
+           | TDTDescription Text
+           | TDTSummary     Text
+           | TDTLocation    Text
     deriving (Eq, Ord, Show)
+
+fromText :: Text -> String 
+fromText (Text s) = s
+
+getTokenValue :: Token -> String
+getTokenValue (TProdID t)        = fromText t 
+getTokenValue (TUID t)           = fromText t 
+getTokenValue (TDTStamp t)       = fromText t 
+getTokenValue (TDTStart t)       = fromText t 
+getTokenValue (TDTEnd t)         = fromText t 
+getTokenValue (TDTDescription t) = fromText t 
+getTokenValue (TDTSummary t)     = fromText t 
+getTokenValue (TDTLocation t)    = fromText t 
+getTokenValue _ = error "Uh oh"
+
 
 testString :: String
 testString = "BEGIN:VCALENDAR\r\n\
@@ -58,6 +69,7 @@ testString = "BEGIN:VCALENDAR\r\n\
 \DTSTART:19970714T170000Z\r\n\
 \DTEND:19970715T040000Z\r\n\
 \SUMMARY:Bastille Day Party\r\n\
+\ Hello world\r\n\
 \END:VEVENT\r\n\
 \END:VCALENDAR\r\n"
 
@@ -78,11 +90,17 @@ tokenizeVersion = TVersion <$ token "VERSION:2.0\r\n"
 
 -- TODO, improve failure condition to include both \r\n
 
-tokenizeGenericString :: String -> (String -> Token) -> Parser Char Token 
-tokenizeGenericString s c = (\_ s _ -> c s) <$> token s <*> many (satisfy (/= '\r')) <*> token "\r\n" 
+parseText :: String -> Parser Char Text
+parseText s = Text <$> (token s *> collectText)
+  where
+    collectText = many (satisfy (/= '\r')) >>= \c -> token "\r\n" >>= \s -> look >>= \r -> f c r s
+    f c r s = case r of
+        (' ' : _) -> anySymbol >> collectText >>= \m -> return (c ++ s ++ " " ++ m)
+        _         -> return c
 
-tokenizeProdID :: Parser Char Token 
-tokenizeProdID = (\_ s _ -> TProdID s) <$> token "PRODID:" <*> many (satisfy (/= '\r')) <*> token "\r\n" 
+-- "\r\n " -> False
+-- isTextEnding :: -> Bool
+
 
 -- text may have new lines, incorperate that
 tokenize :: Parser Char Token 
@@ -91,20 +109,37 @@ tokenize = tokenizeBeginCalendar
        <|> tokenizeBeginEvent 
        <|> tokenizeEndEvent 
        <|> tokenizeVersion
-       <|> tokenizeGenericString "PRODID:"      TProdID
-       <|> tokenizeGenericString "UID:"         TUID
-       <|> tokenizeGenericString "DTSTAMP:"     TDTStamp
-       <|> tokenizeGenericString "DTSTART:"     TDTStart
-       <|> tokenizeGenericString "DTEND:"       TDTEnd
-       <|> tokenizeGenericString "DESCRIPTION:" TDTDescription
-       <|> tokenizeGenericString "SUMMARY:"     TDTSummary 
-       <|> tokenizeGenericString "LOCATION:"    TDTLocation
+       <|> TProdID        <$> parseText "PRODID:"      
+       <|> TUID           <$> parseText "UID:"         
+       <|> TDTStamp       <$> parseText "DTSTAMP:"     
+       <|> TDTStart       <$> parseText "DTSTART:"     
+       <|> TDTEnd         <$> parseText "DTEND:"       
+       <|> TDTDescription <$> parseText "DESCRIPTION:" 
+       <|> TDTSummary     <$> parseText "SUMMARY:"     
+       <|> TDTLocation    <$> parseText "LOCATION:"    
 
 lexCalendar :: Parser Char [Token]
-lexCalendar = many tokenize
+lexCalendar = greedy tokenize
 
 parseCalendar :: Parser Token Calendar
-parseCalendar = undefined
+parseCalendar = Calendar <$> parseProperties <*> parseEvents 
+
+parseProperties :: Parser Token [CalProperties]
+parseProperties = undefined 
+
+parseProperty :: Parser Token CalProperties
+parseProperty = undefined -- CalProperties <$> parseToken <*> parseVersion
+
+parseProdID :: Parser Token String 
+parseProdID = anySymbol >>= \c -> if p c then return $ getTokenValue c else empty
+  where p (TProdID _) = True
+        p _           = False 
+
+parseVersion :: Parser Token Bool 
+parseVersion = undefined
+
+parseEvents :: Parser Token [Event]
+parseEvents = undefined 
 
 recognizeCalendar :: String -> Maybe Calendar
 recognizeCalendar s = run lexCalendar s >>= run parseCalendar
