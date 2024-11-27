@@ -17,9 +17,8 @@ import System.IO
 
 data Result = SyntaxError | Invalid DateTime | Valid DateTime deriving (Eq, Ord)
 
--- ENABLE BEFORE HAND IN
 -- instance Show DateTime where
---     show = printDateTime
+    -- show = printDateTime
 
 instance Show Result where
     show SyntaxError = "date/time with wrong syntax"
@@ -28,9 +27,9 @@ instance Show Result where
 
 main :: IO ()
 main = do
-  print "Started!"
+  print "started!"
   setNewlineTranslations
-  mainDateTime
+  mainCalendar
 
 mainDateTime :: IO ()
 mainDateTime = interact (printOutput . processCheck . processInput)
