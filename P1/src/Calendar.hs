@@ -107,13 +107,11 @@ tokenize = tokenizeBeginCalendar
        <|> TSummary       <$> parseText "SUMMARY:"
        <|> TLocation      <$> parseText "LOCATION:"
 
-
-
 lexCalendar :: Parser Char [Token]
 lexCalendar = greedy tokenize
 
 parseCalendar :: Parser Token Calendar
-parseCalendar = (\a b _ -> Calendar a b) <$> parseProperties <*> parseEvents <*> symbol TEndCalendar
+parseCalendar = Calendar <$> parseProperties <*> parseEvents <* symbol TEndCalendar
 
 parseProperties :: Parser Token [CalProperties]
 parseProperties = greedy parseProperty

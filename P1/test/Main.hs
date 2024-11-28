@@ -1,3 +1,5 @@
+-- Tom Selier (5412498)
+
 -- You can use this file to test your functions: `cabal run` executes main.
 -- For example, if main is set to mainDateTime or mainCalendar:
 -- echo "19970610T172345Z" | cabal run
@@ -13,7 +15,7 @@ import Calendar
 import Features
 import System.Environment
 import System.IO
-
+import Data.Maybe
 
 data Result = SyntaxError | Invalid DateTime | Valid DateTime deriving (Eq, Ord)
 
