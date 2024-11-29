@@ -43,83 +43,56 @@ data Token = TBeginCalendar
            | TLocation    String
            deriving (Eq, Ord, Show)
 
-testString :: String
-testString = "BEGIN:VCALENDAR\r\n\
-\VERSION:2.0\r\n\
-\PRODID:-//hacksw/handcal//NONSGML v1.0//EN\r\n\
-\BEGIN:VEVENT\r\n\
-\UID:19970610T172345Z-AF23B2@example.com\r\n\
-\DTSTAMP:19970610T172345Z\r\n\
-\DTSTART:19970714T170000Z\r\n\
-\DTEND:19970715T040000Z\r\n\
-\SUMMARY:Bastille Day Party\r\n\
-\ Hello world\r\n\
-\END:VEVENT\r\n\
-\END:VCALENDAR\r\n"
+-- | TOKENIZING | -- 
 
-dtFailure :: DateTime
-dtFailure = DateTime { date = Date { year = Year {runYear = 0000}
-                                    , month = Month {runMonth = 0}
-                                    , day = Day {runDay = 0}
-                                    }
-                      , time = Time { hour = Hour {runHour = 0}
-                                    , minute = Minute {runMinute = 0}
-                                    , second = Second {runSecond = 0}
-                                    }
-                      , utc = True
-                      }
+-- tokenize any literal text to a token
+tokenizeLiteral :: Token -> String -> Parser Char Token
+tokenizeLiteral t s = t <$ token s
 
-tokenizeBeginCalendar :: Parser Char Token
-tokenizeBeginCalendar = TBeginCalendar <$ token "BEGIN:VCALENDAR\r\n"
-
-tokenizeEndCalendar:: Parser Char Token
-tokenizeEndCalendar = TEndCalendar <$ token "END:VCALENDAR\r\n"
-
-tokenizeBeginEvent :: Parser Char Token
-tokenizeBeginEvent = TBeginEvent <$ token "BEGIN:VEVENT\r\n"
-
-tokenizeEndEvent :: Parser Char Token
-tokenizeEndEvent = TEndEvent <$ token "END:VEVENT\r\n"
-
-tokenizeVersion :: Parser Char Token
-tokenizeVersion = TVersion <$ token "VERSION:2.0\r\n"
-
-parseText :: String -> Parser Char String
-parseText s = token s *> collectText
+-- this mess of a function parses untill \r\n followed by a non-space
+-- maybe this can be done more pretty?
+tokenizeText :: String -> Parser Char String
+tokenizeText s = token s *> collectText
   where
-    collectText = many (satisfy (/= '\r')) >>= \c -> token "\r\n" >>= \s -> look >>= \r -> f c r s
-    f c r s = case r of
-        (' ' : _) -> anySymbol >> collectText >>= \m -> return (c ++ s ++ " " ++ m)
+    collectText = many (satisfy (/= '\r')) >>= \c -> token "\r\n" >> look >>= \r -> f c r 
+    f c r = case r of
+        (' ' : _) -> anySymbol >> collectText >>= \m -> return (c ++ m)
         _         -> return c
 
 tokenize :: Parser Char Token
-tokenize = tokenizeBeginCalendar
-       <|> tokenizeEndCalendar
-       <|> tokenizeBeginEvent
-       <|> tokenizeEndEvent
-       <|> tokenizeVersion
-       <|> TProdID        <$> parseText "PRODID:"
-       <|> TUID           <$> parseText "UID:"
-       <|> TDTStamp       <$> parseText "DTSTAMP:"
-       <|> TDTStart       <$> parseText "DTSTART:"
-       <|> TDTEnd         <$> parseText "DTEND:"
-       <|> TDescription   <$> parseText "DESCRIPTION:"
-       <|> TSummary       <$> parseText "SUMMARY:"
-       <|> TLocation      <$> parseText "LOCATION:"
+tokenize = tokenizeLiteral  TBeginCalendar "BEGIN:VCALENDAR\r\n"
+       <|> tokenizeLiteral  TEndCalendar   "END:VCALENDAR\r\n"
+       <|> tokenizeLiteral  TBeginEvent    "BEGIN:VEVENT\r\n"
+       <|> tokenizeLiteral  TEndEvent      "END:VEVENT\r\n" 
+       <|> tokenizeLiteral  TVersion       "VERSION:2.0\r\n"
+       <|> TProdID      <$> tokenizeText   "PRODID:"
+       <|> TUID         <$> tokenizeText   "UID:"
+       <|> TDTStamp     <$> tokenizeText   "DTSTAMP:"
+       <|> TDTStart     <$> tokenizeText   "DTSTART:"
+       <|> TDTEnd       <$> tokenizeText   "DTEND:"
+       <|> TDescription <$> tokenizeText   "DESCRIPTION:"
+       <|> TSummary     <$> tokenizeText   "SUMMARY:"
+       <|> TLocation    <$> tokenizeText   "LOCATION:"
 
 lexCalendar :: Parser Char [Token]
 lexCalendar = greedy tokenize
 
+-- | PARSING | --
+
+-- pack doesn't quite work here, because we want to run two parsers between delimeters
 parseCalendar :: Parser Token Calendar
-parseCalendar = Calendar <$> parseProperties <*> parseEvents <* symbol TEndCalendar
+parseCalendar = (\_ a b -> Calendar a b) <$> symbol TBeginCalendar 
+                                         <*> parseProperties 
+                                         <*> parseEvents 
+                                         <*  symbol TEndCalendar
 
 parseProperties :: Parser Token [CalProperties]
 parseProperties = greedy parseProperty
 
--- this function purposefully crashes when either version or prodid is not correct
--- list comprehension is used as a kind of filter
+-- this function purposefully crashes when either version or prodid is missing
+-- list comprehension is used as a kind of filter for constructors
 parseProperty :: Parser Token CalProperties
-parseProperty = (\_ props -> buildProps props) <$> symbol TBeginCalendar <*> greedy (satisfy (/= TBeginEvent))
+parseProperty = buildProps <$> some (satisfy (/= TBeginEvent))
   where
     buildProps :: [Token] -> CalProperties
     buildProps tokens = let version = once [True | TVersion    <- tokens]
@@ -129,30 +102,29 @@ parseProperty = (\_ props -> buildProps props) <$> symbol TBeginCalendar <*> gre
 parseEvents :: Parser Token [Event]
 parseEvents = greedy parseEvent
 
--- this function purposefully crashes when either version or prodid is not correct
--- list comprehension is used as a kind of filter
+-- this function purposefully crashes when a required token is missing
+-- list comprehension is used as a kind of filter for constructors
 parseEvent :: Parser Token Event
-parseEvent = buildEvent <$> pack (symbol TBeginEvent) (greedy $ satisfy (/= TEndEvent)) (symbol TEndEvent)
+parseEvent = buildEvent <$> pack (symbol TBeginEvent) (greedy1 $ satisfy (/= TEndEvent)) (symbol TEndEvent)
   where
     buildEvent :: [Token] -> Event
-    buildEvent tokens = let uid   = once [x | (TUID x) <- tokens]
-                            stamp = once [x | (TDTStamp x) <- tokens]
-                            start = once [x | (TDTStart x) <- tokens]
-                            end   = once [x | (TDTEnd x) <- tokens]
+    buildEvent tokens = let uid   = once [x | (TUID x)         <- tokens]
+                            stamp = once [x | (TDTStamp x)     <- tokens]
+                            start = once [x | (TDTStart x)     <- tokens]
+                            end   = once [x | (TDTEnd x)       <- tokens]
                             des   = once [x | (TDescription x) <- tokens]
-                            sum   = once [x | (TSummary x) <- tokens]
-                            loc   = once [x | (TLocation x) <- tokens]
+                            sum   = once [x | (TSummary x)     <- tokens]
+                            loc   = once [x | (TLocation x)    <- tokens]
                          in Event (convertDT $ fromJust stamp)
                                   (fromJust uid)
                                   (convertDT $ fromJust start)
                                   (convertDT $ fromJust end)
-                                  des
-                                  sum
-                                  loc
+                                  des sum loc
 
     convertDT :: String -> DateTime
-    convertDT s = fromMaybe dtFailure $ run parseDateTime s
+    convertDT s = fromJust $ run parseDateTime s
 
+-- check if list is a singleton
 once :: [a] -> Maybe a
 once [x] = Just x
 once _   = Nothing
@@ -188,11 +160,15 @@ printEvent event = printEventHeader
                 ++ printOptionalProduction "LOCATION:"    (location    event)
                 ++ printEventFooter
 
+-- it is unclear to me what exactly counts towards the 42 character limit
+-- I've counted the header, but discounted the "\r\n" sequence
 printProduction :: String -> String -> String 
-printProduction k v = k ++ v ++ "\r\n"
+printProduction _ [] = "" -- fixes a specific bug where the line is exactly 42 chars long
+printProduction k v | length (k ++ v) < 42 = k ++ v ++ "\r\n"
+                    | otherwise            = take 42 (k ++ v) ++ "\r\n" ++ printProduction " " (drop 42 (k ++ v))  
 
 printOptionalProduction :: String -> Maybe String -> String
-printOptionalProduction k (Just v) = k ++ v ++ "\r\n"
+printOptionalProduction k (Just v) = printProduction k v
 printOptionalProduction k Nothing = ""
 
 printCalendarHeader :: String

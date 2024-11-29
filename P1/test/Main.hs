@@ -1,4 +1,8 @@
+-- Made by:
 -- Tom Selier (5412498)
+
+-- Worked together with:
+-- Mirko van de Hoef (2176777)
 
 -- You can use this file to test your functions: `cabal run` executes main.
 -- For example, if main is set to mainDateTime or mainCalendar:
@@ -41,7 +45,10 @@ mainDateTime = interact (printOutput . processCheck . processInput)
     printOutput  = unlines . map show
 
 mainCalendar :: IO ()
-mainCalendar = interact (show . recognizeCalendar)
+mainCalendar = interact (printCalendar . fromJust . recognizeCalendar)
+
+mainCalendar' :: IO ()
+mainCalendar' = interact (show . recognizeCalendar)
 
 readCalendar :: FilePath -> IO (Maybe Calendar)
 readCalendar path = do
