@@ -35,7 +35,7 @@ main :: IO ()
 main = do
   print "started!"
   setNewlineTranslations
-  mainCalendar
+  mainDateTime
 
 mainDateTime :: IO ()
 mainDateTime = interact (printOutput . processCheck . processInput)

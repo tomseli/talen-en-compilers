@@ -7,7 +7,6 @@ datetime  ::= date datesep time
 
 date      ::= year month day
 
--- wat doet utc hier? volgens de datatypes hoort deze bij datetime
 time      ::= hour minute second timeutc 
 
 year      ::= digit digit digit digit

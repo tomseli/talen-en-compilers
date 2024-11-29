@@ -123,13 +123,16 @@ parsePrint s = printDateTime <$> run parseDateTime s
 checkDateTime :: DateTime -> Bool
 checkDateTime dt = checkDate (date dt) && checkTime (time dt) 
 
+-- guard against negative years, as per the grammar
 checkDate :: Date -> Bool
-checkDate d = case fromGregorianValid 
-  (toInteger (runYear (year d))) 
-  (runMonth (month d)) 
-  (runDay (day d)) of
-    Just _ -> True 
-    Nothing -> False
+checkDate d  
+  | runYear (year d) < 0 = error "year less then 0"
+  | otherwise            = case fromGregorianValid 
+    (toInteger (runYear (year d))) 
+    (runMonth (month d)) 
+    (runDay (day d)) of
+      Just _ -> True 
+      Nothing -> False
 
 checkTime :: Time -> Bool 
 checkTime t = case makeTimeOfDayValid 
