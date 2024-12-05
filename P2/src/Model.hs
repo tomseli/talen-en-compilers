@@ -57,4 +57,35 @@ readIdent (s:ss) | isAlpha s  = Letter s (readIdent ss)
                  | otherwise  = error "readIdent: Failed to match"
 
 -- Exercise 2
-data Program = Program deriving Show
+
+newtype Program = Program [Rule] deriving (Show)
+
+data Rule = Rule Ident_ Cmds deriving (Show)
+
+newtype Cmds = Cmds [Cmd] deriving (Show)
+
+data Cmd = CGo 
+         | CTake 
+         | CMark 
+         | CNothing 
+         | CTurn   Dir 
+         | CCase   Dir    Alts 
+         | CIndent Ident_
+         deriving (Show)
+
+data Dir = Left 
+         | Right 
+         | Front  
+         deriving (Show)
+
+newtype Alts = Alts [Alt] deriving (Show)
+
+data Alt = Alt Pat Cmds deriving (Show)
+
+data Pat = PEmpty 
+         | PLambda 
+         | PDebris 
+         | PAsteroid 
+         | PBoundary 
+         | PUnderscore
+         deriving (Show) 

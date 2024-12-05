@@ -13,7 +13,6 @@ tokens :-
   $white+              ;
   \-\>                    { const TArrow               }
   \.                      { const TDot                 }
-  -- this ignores the mandatory space after a comma
   \,                      { const TComma               }
   go                      { const TGo                  } 
   take                    { const TTake                }
