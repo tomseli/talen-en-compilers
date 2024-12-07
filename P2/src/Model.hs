@@ -58,11 +58,13 @@ readIdent (s:ss) | isAlpha s  = Letter s (readIdent ss)
 
 -- Exercise 2
 
-newtype Program = Program [Rule] deriving (Show)
+newtype Program = Program Rules deriving (Show)
 
-data Rule = Rule Ident_ Cmds deriving (Show)
+type Rules = [Rule]
 
-newtype Cmds = Cmds [Cmd] deriving (Show)
+data Rule = Rule Ident_ [Cmd] deriving (Show)
+
+type Cmds = [Cmd]
 
 data Cmd = CGo 
          | CTake 
@@ -70,15 +72,15 @@ data Cmd = CGo
          | CNothing 
          | CTurn   Dir 
          | CCase   Dir    Alts 
-         | CIndent Ident_
+         | CIdent Ident_
          deriving (Show)
 
-data Dir = Left 
-         | Right 
-         | Front  
+data Dir = DLeft 
+         | DRight 
+         | DFront  
          deriving (Show)
 
-newtype Alts = Alts [Alt] deriving (Show)
+type Alts = [Alt] 
 
 data Alt = Alt Pat Cmds deriving (Show)
 
@@ -88,4 +90,4 @@ data Pat = PEmpty
          | PAsteroid 
          | PBoundary 
          | PUnderscore
-         deriving (Show) 
+         deriving (Show)

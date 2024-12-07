@@ -1,1 +1,5 @@
-start       -> turn right, go, turn left, firstArg.
+start       -> go, take, firstArg.
+
+firstArg    -> take, mark.
+
+secondArg   -> turn left, turn right, turn front.
