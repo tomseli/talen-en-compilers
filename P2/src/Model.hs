@@ -37,7 +37,7 @@ data Ident_ = Letter Char Ident_
 
 instance Show Ident_ where 
   show :: Ident_ -> String
-  show i = "Ident_ ( \"" ++ show' i ++ "\" )"
+  show i = "Ident_ (\"" ++ show' i ++ "\")"
     where 
       show' x = case x of 
         (Letter c rest) -> c : show' rest   
@@ -62,7 +62,7 @@ newtype Program = Program Rules deriving (Show)
 
 type Rules = [Rule]
 
-data Rule = Rule Ident_ [Cmd] deriving (Show)
+data Rule = Rule Ident_ Cmds deriving (Show)
 
 type Cmds = [Cmd]
 
