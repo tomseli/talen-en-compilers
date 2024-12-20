@@ -69,12 +69,12 @@ main = do
 
   if nr == 1 
   then do
-    let (a, b, c) = batch env (ArrowState space (my - ny, nx) Up_ [CIdent $ readIdent "start"])
+    let (a, b, c) = batch env (ArrowState space (0, 0) Up_ [CIdent $ readIdent "start"])
     putStrLn "\n Done!"
     printSpaceIO a
   else do
     putStrLn "= Press enter to continue ="
-    interactive env (ArrowState space (my - ny, nx) Up_ [CIdent $ readIdent "start"])
+    interactive env (ArrowState space (0, 0) Up_ [CIdent $ readIdent "start"])
 
 
 printEnvIO :: Environment -> IO ()

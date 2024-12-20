@@ -14,7 +14,7 @@ import Parser
 import Model
 import Algebra
 
-data Contents  =  Empty | Lambda | Debris | Asteroid | Boundary deriving (Eq)
+data Contents  =  Empty | Lambda | Debris | Asteroid | Boundary deriving (Eq, Ord)
 
 type Size      =  Int
 type Pos       =  (Int, Int)
@@ -52,12 +52,18 @@ contentsTable =  [ (Empty   , '.' )
 
 
 -- Exercise 7
+contentsMap :: L.Map Contents Char
+contentsMap = L.fromList contentsTable  -- Correctly mapping the contents to their characters
+
 printSpace :: Space -> String
-printSpace space =
-  show (max, max) ++ "\n" ++ unlines [[printCell (y, x) | x <- [0..max]] | y <- [0..max]]
-    where
-      ((max, _), _) = L.findMax space
-      printCell pos = fromMaybe '?' (L.lookup pos space >>= \c -> lookup c contentsTable)
+printSpace space = unlines $ map printRow [0..maxX]  
+  where
+    -- Find the maximum x and y values in the space
+    maxX = maximum (map fst (L.keys space))
+    maxY = maximum (map snd (L.keys space))
+
+    -- Print each row as a string
+    printRow x = [fromMaybe '?' (L.lookup (x, y) space >>= (`L.lookup` contentsMap)) | y <- [0..maxY]]
 
 -- These three should be defined by you
 data Direction = Left_ | Up_ | Right_ | Down_ deriving (Show, Eq, Enum)
