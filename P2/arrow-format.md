@@ -48,8 +48,7 @@ type Size     = Int
 type Pos      = (Int, Int)
 data Contents = Empty | Lambda | Debris | Asteroid | Boundary
 ```
-We assume that there always is a rectangular area of positions with non-negative row-
-and column-coordinates contained in the finite map, including position (0, 0). 
+We assume that there always is a rectangular area of positions with non-negative row- and column-coordinates contained in the finite map, including position (0, 0). 
 Functions can use `findMax` to find the maximum key and hence the maximum position in a given space.
 We define an input format for spaces where contents are represented by characters:
 
@@ -70,8 +69,5 @@ We specify the format by example:
 ....%.%%
 ....%%%%
 ........
-The first line contains the maximum valid row-column-coordinate for the board. Here,
-we thus have a space with 8 rows and 8 columns. The rows are then specified line by
-line, starting with row 0 end ending with row 7. The example space contains a field of
-debris, but otherwise just empty space.
+The first line contains the maximum valid row-column-coordinate for the board. Here, we thus have a space with 8 rows and 8 columns. The rows are then specified line by line, starting with row 0 end ending with row 7. The example space contains a field of debris, but otherwise just empty space.
 A parser for the input format is included in the starting framework in [src/Interpreter.hs](src/Interpreter.hs).

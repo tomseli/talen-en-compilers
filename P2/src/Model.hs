@@ -56,6 +56,9 @@ readIdent (s:ss) | isAlpha s  = Letter s (readIdent ss)
                  | '-' == s   = Minus    (readIdent ss)
                  | otherwise  = error "readIdent: Failed to match"
 
+compareIdentString :: Ident_ -> String -> Bool
+compareIdentString ident s = show ident == "Ident_ (\"" ++ s ++ "\")"
+
 -- Exercise 2
 
 newtype Program = Program Rules deriving (Show)
@@ -76,9 +79,9 @@ data Cmd = CGo
          deriving (Show)
 
 data Dir = DLeft 
+         | DFront 
          | DRight 
-         | DFront  
-         deriving (Show)
+         deriving (Show, Enum)
 
 type Alts = [Alt] 
 
@@ -90,4 +93,4 @@ data Pat = PEmpty
          | PAsteroid 
          | PBoundary 
          | PUnderscore
-         deriving (Show)
+         deriving (Eq, Show)

@@ -35,8 +35,7 @@ A framework for the Arrow assignment of the course Talen & Compilers at the Univ
   Write a printer for Space that produces the output format just shown, in Interpreter.hs.
 
 8. (0.5 pt). 
-  Write a function `toEnvironment` in Interpreter.hs that first lexes and then parses a string, 
-  checks the resulting Program using check , and, if the check succeeds, 
+  Write a function `toEnvironment` in Interpreter.hs that first lexes and then parses a string, checks the resulting Program using check , and, if the check succeeds, 
   translates the Program into an environment.
 
 9. (1.5 pt). 
@@ -45,26 +44,13 @@ A framework for the Arrow assignment of the course Talen & Compilers at the Univ
   Implement a function in Interpreter.hs that performs a single execution `step`.
   The function implements the following semantics. The top item on the command stack
   is analyzed:
-    * On go, Arrow moves forward one step using its current heading, as long as the
-      target field is empty or contains a lambda or debris. Otherwise, it stays where it
-      is.
-    * On take, Arrow picks up lambda or debris, leaving an empty space at its current
-      position.
-    * On mark, Arrow places a lambda at its current position regardless of what was
-      there before (debris is removed).
+    * On go, Arrow moves forward one step using its current heading, as long as the target field is empty or contains a lambda or debris. Otherwise, it stays where it is.
+    * On take, Arrow picks up lambda or debris, leaving an empty space at its current position.
+    * On mark, Arrow places a lambda at its current position regardless of what was there before (debris is removed).
     * On nothing, nothing changes.
-    * On turn, Arrow changes its heading by 90 degrees to the left or right as indicated.
-      Turning forward is possible, but has no effect.
-    * On a case, Arrow makes a sensor reading. Depending on the direction specified
-      as an argument to case, Arrow will take a look at the position that – according to
-      its current heading – is to the front, left, or right. The pattern of each alternative
-      is then analyzed in turn until one matching alternative is found. The instructions
-      on the right hand side are then prepended to the command stack and execution
-      continues. If no alternative matches, execution fails. An alternative matches if the
-      pattern corresponds to the contents. Positions that are not stored in the finite map
-      are implicitly assumed to contain Boundary. A catch-all pattern matches always.
-    * On a rule call, the code stored with that rule in the environment is prepended to
-      the command stack. If the rule is not defined, execution fails.
+    * On turn, Arrow changes its heading by 90 degrees to the left or right as indicated. Turning forward is possible, but has no effect.
+    * On a case, Arrow makes a sensor reading. Depending on the direction specified as an argument to case, Arrow will take a look at the position that – according to its current heading – is to the front, left, or right. The pattern of each alternative is then analyzed in turn until one matching alternative is found. The instructions on the right hand side are then prepended to the command stack and execution continues. If no alternative matches, execution fails. An alternative matches if the pattern corresponds to the contents. Positions that are not stored in the finite map are implicitly assumed to contain Boundary. A catch-all pattern matches always.
+    * On a rule call, the code stored with that rule in the environment is prepended to the command stack. If the rule is not defined, execution fails.
     * If the command stack is empty, a Done result is produced.
 
 10. (0.5 pt). 
@@ -73,14 +59,17 @@ A framework for the Arrow assignment of the course Talen & Compilers at the Univ
   of a command sequence or at the very end of the command sequence?
 
 11. (0.5 pt). 
-  Write two drivers `interactive` and `batch` in Main.hs that – given an environment and 
-  an initial state – run the program. The interactive driver should print in every step at 
-  least the board and ask for some form of user confirmation. After getting the user input, 
-  the driver should invoke the next step and continue from the beginning. This driver should 
-  recognize abnormal and successful terminations of the reduction and treat them sensibly. 
-  The batch driver should run the program and return the final state, in which there are no 
-  more steps to take. Write proper main programs that lets you read in a space and a program 
-  from a file, specify a start position and heading, and runs the program in either mode.
+  Write two drivers `interactive` and `batch` in Main.hs that – given an environment and  an initial state – run the program. 
+  
+  The interactive driver should print in every step at least the board and ask for some form of user confirmation. 
+  
+  After getting the user input, the driver should invoke the next step and continue from the beginning. 
+  
+  This driver should  recognize abnormal and successful terminations of the reduction and treat them sensibly. 
+  
+  The batch driver should run the program and return the final state, in which there are no more steps to take. 
+  
+  Write proper main programs that lets you read in a space and a program from a file, specify a start position and heading, and runs the program in either mode.
 
 
 ## Alex and Happy
